@@ -1,10 +1,10 @@
 // scripts.js
 
 document.addEventListener("DOMContentLoaded", function() {
-    const hamburgerMenu = document.querySelector(".hamburger-menu");
-    const menu = document.querySelector(".nav-links");
+    const navbarToggler = document.querySelector(".navbar-toggler");
+    const navbarCollapse = document.querySelector("#navbarNav");
 
-    hamburgerMenu.addEventListener("click", function() {
-        menu.classList.toggle("active");
+    navbarToggler.addEventListener("click", function() {
+        navbarCollapse.classList.toggle("show");
     });
 });
