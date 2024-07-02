@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -30,9 +31,27 @@ def contact():
 @app.route('/add_comment', methods=['POST'])
 def add_comment():
     comment = request.json['comment']
-    comments.append(comment)
-    return jsonify({'status': 'success', 'comment': comment})
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    comments.append({'comment': comment, 'timestamp': timestamp})
+    return jsonify({'status': 'success', 'comment': comment, 'timestamp': timestamp})
+
+@app.route('/delete_comment', methods=['POST'])
+def delete_comment():
+    comment_id = request.json['comment_id']
+    if 0 <= comment_id < len(comments):
+        comments.pop(comment_id)
+        return jsonify({'status': 'success'})
+    return jsonify({'status': 'error'}), 400
+
+@app.route('/update_comment', methods=['POST'])
+def update_comment():
+    comment_id = request.json['comment_id']
+    new_comment = request.json['new_comment']
+    if 0 <= comment_id < len(comments):
+        comments[comment_id]['comment'] = new_comment
+        comments[comment_id]['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return jsonify({'status': 'success', 'new_comment': new_comment, 'timestamp': comments[comment_id]['timestamp']})
+    return jsonify({'status': 'error'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
-
