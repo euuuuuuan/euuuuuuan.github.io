@@ -6,7 +6,6 @@
     <title>Blog | My Sensational Blog</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -43,6 +42,18 @@
 
 <main class="content py-5">
     <div class="container">
+        <!-- Search Bar -->
+        <div class="mb-3">
+            <input type="text" id="search-input" class="form-control" placeholder="Search blog posts...">
+            <button id="search-button" class="btn btn-primary mt-2">Search</button>
+        </div>
+
+        <!-- Search Results -->
+        <div id="search-results">
+            <!-- Search results will be displayed here dynamically -->
+        </div>
+
+        <!-- Blog Posts -->
         <div class="row">
             <article class="col-md-6 mb-4">
                 <div class="card">
@@ -61,22 +72,6 @@
                 </div>
             </article>
         </div>
-
-        <!-- 댓글 섹션 -->
-        <div class="comment-section mt-5">
-            <h3>Comments</h3>
-            <div id="comments-list">
-                {% for index, comment in enumerate(comments) %}
-                <div class="comment" data-id="{{ index }}">
-                    <p>{{ comment.comment }} <small>({{ comment.timestamp }})</small></p>
-                    <button class="btn btn-danger btn-sm delete-comment">Delete</button>
-                    <button class="btn btn-secondary btn-sm edit-comment">Edit</button>
-                </div>
-                {% endfor %}
-            </div>
-            <textarea id="comment-input" class="form-control mt-3" rows="3" placeholder="Write a comment..."></textarea>
-            <button id="submit-comment" class="btn btn-primary mt-3">Submit</button>
-        </div>
     </div>
 </main>
 
@@ -88,67 +83,45 @@
 <script src="scripts.js"></script>
 <script>
     $(document).ready(function() {
-        $('#submit-comment').click(function() {
-            const comment = $('#comment-input').val();
-            if (comment) {
+        $('#search-button').click(function() {
+            const query = $('#search-input').val().trim().toLowerCase();
+            if (query !== '') {
                 $.ajax({
-                    url: '/add_comment',
-                    type: 'POST',
+                    url: '/search_posts?query=' + query,
+                    type: 'GET',
                     contentType: 'application/json',
-                    data: JSON.stringify({ comment: comment }),
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            $('#comments-list').append('<div class="comment" data-id="' + ($('#comments-list .comment').length) + '">' +
-                                '<p>' + response.comment + ' <small>(' + response.timestamp + ')</small></p>' +
-                                '<button class="btn btn-danger btn-sm delete-comment">Delete</button> ' +
-                                '<button class="btn btn-secondary btn-sm edit-comment">Edit</button>' +
-                                '</div>');
-                            $('#comment-input').val('');
-                        }
+                    success: function(posts) {
+                        displaySearchResults(posts);
+                    },
+                    error: function(err) {
+                        console.error('Error searching posts:', err);
+                        displaySearchResults([]);
                     }
                 });
+            } else {
+                displaySearchResults([]);
             }
         });
 
-        $(document).on('click', '.delete-comment', function() {
-            const commentElement = $(this).closest('.comment');
-            const commentId = commentElement.data('id');
+        function displaySearchResults(posts) {
+            const searchResultsDiv = $('#search-results');
+            searchResultsDiv.empty();
 
-            $.ajax({
-                url: '/delete_comment',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ comment_id: commentId }),
-                success: function(response) {
-                    if (response.status === 'success') {
-                        commentElement.remove();
-                    }
-                }
-            });
-        });
-
-        $(document).on('click', '.edit-comment', function() {
-            const commentElement = $(this).closest('.comment');
-            const commentId = commentElement.data('id');
-            const commentText = commentElement.find('p').text().trim();
-
-            const newComment = prompt("Edit your comment:", commentText);
-            if (newComment) {
-                $.ajax({
-                    url: '/update_comment',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ comment_id: commentId, new_comment: newComment }),
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            commentElement.find('p').html(response.new_comment + ' <small>(' + response.timestamp + ')</small>');
-                        }
-                    }
+            if (posts.length === 0) {
+                searchResultsDiv.append('<p>No results found.</p>');
+            } else {
+                posts.forEach(post => {
+                    searchResultsDiv.append('<div class="card mb-3">' +
+                        '<div class="card-body">' +
+                        '<h5 class="card-title">' + post.title + '</h5>' +
+                        '<p class="card-text">' + post.content + '</p>' +
+                        '</div></div>');
                 });
             }
-        });
+        }
     });
 </script>
 </body>
 </html>
+
 

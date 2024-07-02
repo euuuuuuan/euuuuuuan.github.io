@@ -1,9 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
-from datetime import datetime
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# 가상의 데이터베이스
+# 가상의 블로그 포스트 데이터
+blog_posts = [
+    {'title': 'First Blog Post', 'content': 'This is the content of the first blog post.'},
+    {'title': 'Second Blog Post', 'content': 'This is my second blog post. More content to come!'},
+    {'title': 'Another Interesting Post', 'content': 'This blog post is about something really interesting.'}
+]
+
 comments = []
 
 @app.route('/')
@@ -16,7 +21,7 @@ def about():
 
 @app.route('/blog')
 def blog():
-    return render_template('blog.html', comments=comments)
+    return render_template('blog.html', blog_posts=blog_posts, comments=comments)
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -52,6 +57,12 @@ def update_comment():
         comments[comment_id]['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return jsonify({'status': 'success', 'new_comment': new_comment, 'timestamp': comments[comment_id]['timestamp']})
     return jsonify({'status': 'error'}), 400
+
+@app.route('/search_posts', methods=['GET'])
+def search_posts():
+    query = request.args.get('query', '').lower()
+    results = [post for post in blog_posts if query in post['title'].lower() or query in post['content'].lower()]
+    return jsonify(results)
 
 if __name__ == '__main__':
     app.run(debug=True)
